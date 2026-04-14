@@ -1,30 +1,16 @@
 # LattEasy
 
 LattEasy is a small, approachable toolkit for running Lattice Boltzmann
-simulations from simple 3D pore geometries.
+simulations from 3D pore geometries.
 
-The project goal is straightforward:
-
-- install quickly
-- run a first simulation with sane defaults
-- keep the native build steps explicit instead of surprising
 
 ## Quickstart
 
 ### 1. Create a virtual environment
 
-macOS and Linux:
-
 ```bash
 python3 -m venv .venv
 source .venv/bin/activate
-```
-
-Windows PowerShell:
-
-```powershell
-py -m venv .venv
-.\.venv\Scripts\Activate.ps1
 ```
 
 ### 2. Install the Python package
@@ -61,7 +47,6 @@ Typical installs:
 
 - Debian and Ubuntu: `sudo apt-get install build-essential cmake libopenmpi-dev openmpi-bin`
 - macOS with Homebrew: `brew install cmake open-mpi`
-- Windows: install CMake, Visual Studio Build Tools, and an MPI runtime such as MS-MPI
 
 Use the system `cmake` executable. The Python `cmake` package is not enough.
 

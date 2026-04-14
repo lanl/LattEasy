@@ -31,6 +31,39 @@ using namespace plb;
 typedef double T;
 #define DESCRIPTOR descriptors::D3Q19Descriptor
 
+bool isToolOnPath(const std::string& toolName)
+{
+  const char* pathEnv = std::getenv("PATH");
+  if (!pathEnv) {
+    return false;
+  }
+
+#ifdef _WIN32
+  const char pathSeparator = ';';
+  const char dirSeparator = '\\';
+  std::vector<std::string> suffixes = {"", ".exe", ".bat", ".cmd"};
+#else
+  const char pathSeparator = ':';
+  const char dirSeparator = '/';
+  std::vector<std::string> suffixes = {""};
+#endif
+
+  std::stringstream pathStream(pathEnv);
+  std::string directory;
+  while (std::getline(pathStream, directory, pathSeparator)) {
+    if (directory.empty()) {
+      continue;
+    }
+    for (std::vector<std::string>::const_iterator it = suffixes.begin(); it != suffixes.end(); ++it) {
+      std::ifstream candidate((directory + dirSeparator + toolName + *it).c_str());
+      if (candidate.good()) {
+        return true;
+      }
+    }
+  }
+  return false;
+}
+
 
 // This function object returns a zero velocity, and a pressure which decreases
 //   linearly in x-direction. It is used to initialize the particle populations.
@@ -280,7 +313,12 @@ void porousMediaSetup(MultiBlockLattice3D<T,DESCRIPTOR>& lattice,
     pcout << "The convergence threshold is: " << conv << " %" << std::endl;
 
 
-    for (plint run = 1; run <= runnum; ++run) {
+	    const bool gifOutputEnabled = isToolOnPath("convert");
+	    if (!gifOutputEnabled) {
+	      pcout << "Skipping GIF previews because ImageMagick `convert` was not found." << std::endl;
+	    }
+
+	    for (plint run = 1; run <= runnum; ++run) {
 
       MultiBlockLattice3D<T,DESCRIPTOR> lattice( nx,ny,nz,
                                         new BGKdynamics<T,DESCRIPTOR>(omega) );
@@ -332,7 +370,9 @@ void porousMediaSetup(MultiBlockLattice3D<T,DESCRIPTOR>& lattice,
       //   pcout << "Permeability:" << std::endl;
 	      computePermeability(lattice, nu, deltaP, lattice.getBoundingBox(), Perm, Vel, false);
 
-	    writeGifs(lattice,iT,run);
+		    if (gifOutputEnabled) {
+		      writeGifs(lattice,iT,run);
+		    }
 	    std::string outDir = fNameOut + "/";
       std::string vel_name = outDir + GeometryName + "_vel.dat";
       plb_ofstream ofile3( vel_name.c_str() );

@@ -13,7 +13,7 @@ from copy import copy as cp
 from skimage import measure
 from scipy.ndimage import distance_transform_edt as edist
 
-from latteasy._native import find_mpi_launcher, find_solver_executable
+from latteasy._native import build_runtime_env, find_mpi_launcher, find_solver_executable
 
 
 def read_permeability(file_path="pore.txt"):
@@ -80,7 +80,7 @@ def get_lbm_executable():
 
 
 def check_lbm_install():
-    """Check whether the MPLBM software has been installed."""
+    """Check whether the bundled LattEasy solver is available."""
     try:
         exe = get_lbm_executable()
     except FileNotFoundError:
@@ -388,16 +388,17 @@ def erase_regions(rock):
     return rock
 
 
-class write_MPLBM:
+class LattEasySimulation:
     """
-    This class encapsulates methods to set up, manage and execute an MPLBM (MultiPhase Lattice Boltzmann Method)
-    simulation. It uses provided or default settings to create the necessary files and directories, write geometry,
-    write inputs, and execute the simulation.
+    Set up and run a LattEasy single-phase permeability simulation.
+
+    The class creates a simulation folder, writes the processed geometry and
+    XML input, launches the bundled solver, and reads back the permeability.
     """
 
     def __init__(self, pore_obj, buffer_layers=2, cpus=4, num_hrs=14, allocation=None):
         """
-        Initializes the write_MPLBM class
+        Initialize a LattEasy simulation from a 3D pore geometry.
 
         Parameters
         ----------
@@ -419,12 +420,9 @@ class write_MPLBM:
 
         Notes
         -----
-            The class initializes by defining the source location of LBM (Lattice Boltzmann Method), creating required
-            directories, copying the porous object, and pre-processing the 3D image to generate an efficient
-            geometry for simulation. It also writes a shell script to run the simulation.
-
-            The class includes methods to create new folders, write geometry, write various input files, copy necessary
-            data, edit inputs, and save the configuration as a pickle file for future reference.
+            The class locates the bundled solver, creates the simulation
+            folders, preprocesses the 3D image into the solver geometry format,
+            and writes the single-phase input file with stable defaults.
         """
 
         # Ensure the LBM installation is present
@@ -545,7 +543,7 @@ class write_MPLBM:
 
     def save_pickle(self):
         """
-        Saves the current instance of the write_MPLBM class as a pickled object.
+        Save the current LattEasy simulation object as a pickle.
 
         Parameters
         -----------
@@ -589,8 +587,9 @@ class write_MPLBM:
         print("Running:", " ".join(cmd))
 
         perm_log = os.path.join(self.folder_path, "perm.txt")
+        env = build_runtime_env()
         with open(perm_log, "w") as fh:
-            completed = run(cmd, cwd=self.folder_path, stdout=fh, stderr=fh)
+            completed = run(cmd, cwd=self.folder_path, env=env, stdout=fh, stderr=fh)
 
         if completed.returncode != 0:
             raise RuntimeError(
