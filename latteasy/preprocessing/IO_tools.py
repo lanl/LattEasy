@@ -1,10 +1,8 @@
 from subprocess import run
 import os
 from os import mkdir
-from shutil import copy, move
 from argparse import Namespace
-from pathlib import Path
-from importlib import resources
+import re
 
 import pandas as pd
 import numpy as np
@@ -14,6 +12,8 @@ from copy import copy as cp
 
 from skimage import measure
 from scipy.ndimage import distance_transform_edt as edist
+
+from latteasy._native import find_mpi_launcher, find_solver_executable
 
 
 def read_permeability(file_path="pore.txt"):
@@ -48,17 +48,20 @@ def read_permeability(file_path="pore.txt"):
         FileNotFoundError
             If ``pore.txt`` cannot be found.
     """
-    # Read the data file using pandas
-    file = pd.read_csv(file_path, header=None)
+    with open(file_path, "r", encoding="utf-8", errors="ignore") as file:
+        text = file.read()
 
-    # Find the index of the first equal sign in the last fourth line
-    ind1 = str(file.iloc[-4]).find("=") + 2
-    # Find the index of the substring '\nName' in the last fourth line
-    ind2 = str(file.iloc[-4]).find("\nName")
+    patterns = [
+        r"Absolute Permeability(?:\s*\[[^\]]+\])?\s*=\s*([-+]?\d*\.?\d+(?:[eE][-+]?\d+)?)",
+        r"Permeability(?:\s*\[[^\]]+\])?\s*=\s*([-+]?\d*\.?\d+(?:[eE][-+]?\d+)?)",
+    ]
 
-    # Extract the permeability value from the string between the two indices and convert it to float
-    perm = float(str(file.iloc[-4])[ind1:ind2])
-    return perm
+    for pattern in patterns:
+        matches = re.findall(pattern, text)
+        if matches:
+            return float(matches[-1])
+
+    raise ValueError(f"Could not parse permeability from `{file_path}`.")
 
 
 def get_lbm_executable():
@@ -73,26 +76,7 @@ def get_lbm_executable():
     """
 
 
-    # Location inside an installed package
-    pkg_root = resources.files("latteasy")
-    exe = pkg_root / "bin" / "permeability"
-    if exe.is_file():
-        return exe
-
-    # Backwards compatibility with older installs where the executable lived
-    # under ``src/single_phase`` inside the package
-    legacy = pkg_root / "src" / "single_phase" / "permeability"
-    if legacy.is_file():
-        return legacy
-
-    # Fallback: run from the repository without installation
-    repo_exe = (
-        Path(__file__).resolve().parents[2] / "src" / "single_phase" / "permeability"
-    )
-    if repo_exe.is_file():
-        return repo_exe
-
-    raise FileNotFoundError("permeability executable not found")
+    return find_solver_executable()
 
 
 def check_lbm_install():
@@ -100,7 +84,9 @@ def check_lbm_install():
     try:
         exe = get_lbm_executable()
     except FileNotFoundError:
-        raise NotImplementedError("\nLBM has not been installed\n") from None
+        raise RuntimeError(
+            "LBM solver not found. Build it with `latteasy build` before running a simulation."
+        ) from None
     print(f"\nLBM installation was found: {exe}\n")
     return exe
 
@@ -587,8 +573,14 @@ class write_MPLBM:
         if mpi_procs is None:
             mpi_procs = self.cpus
 
+        mpi_launcher = find_mpi_launcher()
+        if mpi_launcher is None:
+            raise RuntimeError(
+                "No MPI launcher was found. Install MPI and make sure `mpirun` or `mpiexec` is on your PATH."
+            )
+
         cmd = [
-            "mpirun",
+            mpi_launcher,
             "-n",
             str(mpi_procs),
             str(self.lbm_loc),
@@ -598,6 +590,25 @@ class write_MPLBM:
 
         perm_log = os.path.join(self.folder_path, "perm.txt")
         with open(perm_log, "w") as fh:
-            run(cmd, cwd=self.folder_path, stdout=fh)
-        perm = read_permeability(os.path.join(self.folder_path, "pore.txt"))
+            completed = run(cmd, cwd=self.folder_path, stdout=fh, stderr=fh)
+
+        if completed.returncode != 0:
+            raise RuntimeError(
+                f"Simulation failed. Check `{perm_log}` for the solver output."
+            )
+
+        candidates = [
+            os.path.join(self.folder_path, "pore.txt"),
+            os.path.join(self.folder_path, "output", "relPerm&vels.txt"),
+            perm_log,
+        ]
+        for candidate in candidates:
+            if os.path.exists(candidate):
+                perm = read_permeability(candidate)
+                break
+        else:
+            raise RuntimeError(
+                "Simulation finished without producing a readable permeability output."
+            )
+
         return perm

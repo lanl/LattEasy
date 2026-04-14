@@ -1,5 +1,4 @@
 include README.md
 recursive-include src *
 recursive-include examples *
-include Install.sh
 recursive-include latteasy/bin *

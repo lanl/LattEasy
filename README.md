@@ -1,43 +1,125 @@
 # LattEasy
 
-LattEasy provides preprocessing and postprocessing utilities for running
-lattice Boltzmann simulations with external C++ solvers.  The original
-C++ sources are included in the `src/` directory.
+LattEasy is a small, approachable toolkit for running Lattice Boltzmann
+simulations from simple 3D pore geometries.
 
-## Installation
+The project goal is straightforward:
 
-Clone this repository and install it with `pip`:
+- install quickly
+- run a first simulation with sane defaults
+- keep the native build steps explicit instead of surprising
 
-```
-git clone https://github.com/youruser/LattEasy.git
-cd LattEasy
-pip install .
-```
+## Quickstart
 
-On Debian-based systems you can get the required build tools with:
+### 1. Create a virtual environment
 
-```
-sudo apt-get install build-essential cmake make libopenmpi-dev openmpi-bin
-```
-On macOS with Homebrew you can install them via:
-```
-brew install cmake open-mpi
+macOS and Linux:
+
+```bash
+python3 -m venv .venv
+source .venv/bin/activate
 ```
 
-The `cmake` command must come from your system package manager (not the
-Python `cmake` module), otherwise installation will fail with
-`ModuleNotFoundError: No module named 'cmake'`.
+Windows PowerShell:
 
-`pip install .` will unpack the Palabos sources and build the C++
-permeability solver.  A C++17 compiler, `cmake`, `make` and an MPI
-implementation must be available on your system.
+```powershell
+py -m venv .venv
+.\.venv\Scripts\Activate.ps1
+```
 
-## Usage
+### 2. Install the Python package
+
+```bash
+pip install -e .
+```
+
+This installs the Python interface and CLI. It does not try to compile the
+native solver during installation.
+
+### 3. Check your machine
+
+```bash
+latteasy doctor
+```
+
+`latteasy doctor` tells you whether Python dependencies, CMake, MPI, and the
+native solver are ready.
+
+### 4. Build the bundled solver
+
+```bash
+latteasy build
+```
+
+This step needs:
+
+- a C++ compiler
+- `cmake`
+- MPI development libraries and a launcher such as `mpirun` or `mpiexec`
+
+Typical installs:
+
+- Debian and Ubuntu: `sudo apt-get install build-essential cmake libopenmpi-dev openmpi-bin`
+- macOS with Homebrew: `brew install cmake open-mpi`
+- Windows: install CMake, Visual Studio Build Tools, and an MPI runtime such as MS-MPI
+
+Use the system `cmake` executable. The Python `cmake` package is not enough.
+
+### 5. Run the first simulation
+
+```bash
+latteasy demo
+```
+
+This runs a small built-in straight-channel permeability example with gentle
+defaults and writes output into `sims/pore_<n>/`.
+
+After the run you should see:
+
+- a permeability value in the terminal
+- solver logs in `sims/pore_<n>/perm.txt`
+- simulation outputs in `sims/pore_<n>/output/`
+
+## Examples
+
+Run the built-in demo from Python:
 
 ```python
-from latteasy.preprocessing import geometry
+from latteasy.demo import run_demo
+
+result = run_demo()
+print(result.permeability)
+print(result.folder_path)
 ```
 
-The `examples/` directory contains small demos such as
-`PoreSpy_permeability/run_permeability.py`.
-## Instructions### For my cluster```bash module load cmake &&module load mpich/3.3.2/gcc-7.5.0 &&```
+If you want the old PoreSpy-based example, install the optional extra first:
+
+```bash
+pip install -e ".[examples]"
+python examples/PoreSpy_permeability/run_permeability.py
+```
+
+There is also a minimal script at `examples/first_simulation.py`.
+
+## Command Line
+
+```bash
+latteasy doctor
+latteasy build
+latteasy demo
+latteasy demo --help
+```
+
+## Repository layout
+
+```text
+latteasy/         Python package
+examples/         small runnable examples
+src/              native C++ solver sources and bundled Palabos archive
+```
+
+## Current scope
+
+LattEasy currently focuses on preprocessing, launching, and reading back a
+single-phase permeability workflow. The interface is being shaped around
+reliable defaults first, with advanced options exposed gradually.

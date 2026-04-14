@@ -9,7 +9,25 @@ description = "Utilities for Lattice Boltzmann preprocessing and postprocessing"
 authors = [{name="LattEasy Developers"}]
 readme = "README.md"
 requires-python = ">=3.8"
+dependencies = [
+    "numpy",
+    "pandas",
+    "scipy",
+    "scikit-image",
+]
+
+[project.optional-dependencies]
+examples = ["porespy"]
+
+[project.scripts]
+latteasy = "latteasy.cli:main"
+
+[tool.setuptools]
+include-package-data = true
 
 [tool.setuptools.packages.find]
 where = ["."]
 include = ["latteasy*"]
+
+[tool.setuptools.package-data]
+latteasy = ["bin/*"]
