@@ -1,0 +1,17 @@
+.DS_Store
+
+.venv/
+.pycache/
+__pycache__/
+*.py[cod]
+
+latteasy.egg-info/
+
+sims/
+latteasy/bin/
+
+src/single_phase/permeability
+src/single_phase/build/*
+!src/single_phase/build/placeholder.txt
+
+src/palabos-master/build/
