@@ -1,4 +1,4 @@
-# LattEasy
+# LattEasy 🤌
 
 LattEasy is a small, approachable toolkit for running Lattice Boltzmann
 simulations from 3D pore geometries.
