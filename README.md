@@ -1,7 +1,7 @@
 # LattEasy 🤌
 
 LattEasy is a small, approachable toolkit for running Lattice Boltzmann
-simulations from 3D pore geometries.
+simulations from 3D pore geometries using the Palabos backend.
 
 
 ## Quickstart
