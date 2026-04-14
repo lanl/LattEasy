@@ -81,7 +81,7 @@ If you want the old PoreSpy-based example, install the optional extra first:
 
 ```bash
 pip install -e ".[examples]"
-python examples/PoreSpy_permeability/run_permeability.py
+python examples/porespy_permeability/run_permeability.py
 ```
 
 There is also a minimal script at `examples/first_simulation.py`.
