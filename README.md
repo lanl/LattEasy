@@ -77,13 +77,6 @@ print(result.permeability)
 print(result.folder_path)
 ```
 
-If you want the old PoreSpy-based example, install the optional extra first:
-
-```bash
-pip install -e ".[examples]"
-python examples/porespy_permeability/run_permeability.py
-```
-
 There is also a minimal script at `examples/first_simulation.py`.
 
 ## Command Line
