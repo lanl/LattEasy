@@ -17,6 +17,8 @@ PALABOS_ARCHIVE = SOURCE_ROOT / "palabos.zip"
 PALABOS_DIR = SOURCE_ROOT / "palabos-master"
 SINGLE_PHASE_DIR = SOURCE_ROOT / "single_phase"
 BUILD_DIR = SINGLE_PHASE_DIR / "build"
+MULTI_PHASE_DIR = SOURCE_ROOT / "multi_phase"
+MULTI_PHASE_BUILD_DIR = MULTI_PHASE_DIR / "build"
 GRAY_SINGLE_PHASE_DIR = SOURCE_ROOT / "gray_single_phase"
 GRAY_SINGLE_PHASE_BUILD_DIR = GRAY_SINGLE_PHASE_DIR / "build"
 COMMON_TOOL_DIRS = (
@@ -183,14 +185,15 @@ def build_solver(jobs=None):
         "-DCMAKE_BUILD_TYPE=Release",
         "-DCMAKE_CXX_STANDARD=17",
     ]
-    subprocess.check_call(configure_cmd)
+    env = build_runtime_env()
+    subprocess.check_call(configure_cmd, env=env)
 
     build_cmd = [cmake, "--build", str(BUILD_DIR), "--config", "Release"]
     if jobs is None:
         jobs = os.cpu_count() or 1
     if jobs > 0:
         build_cmd.extend(["-j", str(jobs)])
-    subprocess.check_call(build_cmd)
+    subprocess.check_call(build_cmd, env=env)
 
     solver = built_solver_path(SINGLE_PHASE_DIR)
     if not solver.is_file():
@@ -207,6 +210,59 @@ def build_solver(jobs=None):
 def find_gray_permeability_executable():
     """Return the compiled single-phase gray permeability executable."""
     return find_solver_executable("gray_permeability", GRAY_SINGLE_PHASE_DIR)
+
+
+def find_two_phase_executable():
+    """Return the compiled two-phase Shan-Chen executable."""
+    return find_solver_executable("ShanChen", MULTI_PHASE_DIR)
+
+
+def build_two_phase_solver(jobs=None):
+    """Build the bundled two-phase solver and copy it into the package."""
+    if not MULTI_PHASE_DIR.is_dir():
+        raise FileNotFoundError(
+            "Two-phase solver sources were not found. Run this command from a LattEasy source checkout."
+        )
+
+    cmake = find_cmake()
+    if cmake is None:
+        raise RuntimeError(
+            "CMake is required to build the two-phase solver. Install it and run the example again."
+        )
+
+    ensure_palabos_sources()
+    ensure_fresh_cmake_build_dir(MULTI_PHASE_BUILD_DIR, MULTI_PHASE_DIR)
+    MULTI_PHASE_BUILD_DIR.mkdir(parents=True, exist_ok=True)
+
+    configure_cmd = [
+        cmake,
+        "-S",
+        str(MULTI_PHASE_DIR),
+        "-B",
+        str(MULTI_PHASE_BUILD_DIR),
+        "-DCMAKE_BUILD_TYPE=Release",
+        "-DCMAKE_CXX_STANDARD=17",
+    ]
+    env = build_runtime_env()
+    subprocess.check_call(configure_cmd, env=env)
+
+    build_cmd = [cmake, "--build", str(MULTI_PHASE_BUILD_DIR), "--config", "Release"]
+    if jobs is None:
+        jobs = os.cpu_count() or 1
+    if jobs > 0:
+        build_cmd.extend(["-j", str(jobs)])
+    subprocess.check_call(build_cmd, env=env)
+
+    solver = built_solver_path(MULTI_PHASE_DIR, "ShanChen")
+    if not solver.is_file():
+        raise FileNotFoundError(
+            f"Build finished, but `{solver.name}` was not created where expected."
+        )
+
+    package_target = packaged_solver_path("ShanChen")
+    package_target.parent.mkdir(parents=True, exist_ok=True)
+    shutil.copy2(solver, package_target)
+    return package_target
 
 
 def build_gray_permeability_solver(jobs=None):
@@ -235,14 +291,15 @@ def build_gray_permeability_solver(jobs=None):
         "-DCMAKE_BUILD_TYPE=Release",
         "-DCMAKE_CXX_STANDARD=17",
     ]
-    subprocess.check_call(configure_cmd)
+    env = build_runtime_env()
+    subprocess.check_call(configure_cmd, env=env)
 
     build_cmd = [cmake, "--build", str(GRAY_SINGLE_PHASE_BUILD_DIR), "--config", "Release"]
     if jobs is None:
         jobs = os.cpu_count() or 1
     if jobs > 0:
         build_cmd.extend(["-j", str(jobs)])
-    subprocess.check_call(build_cmd)
+    subprocess.check_call(build_cmd, env=env)
 
     solver = built_solver_path(GRAY_SINGLE_PHASE_DIR, "gray_permeability")
     if not solver.is_file():

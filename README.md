@@ -89,6 +89,31 @@ middle of the sample before the run. It now runs both the no-fracture and
 fracture cases, then writes a side-by-side velocity comparison plot into the
 fracture run folder as `output/velocity_compare_vs_no_fracture.png`.
 
+For a small PoreSpy-based two-phase steady-state example:
+
+```bash
+uv sync
+source .venv/bin/activate
+python examples/porespy_two_phase/run_steady_state.py
+```
+
+This builds the `ShanChen` solver if needed, generates a seeded blobs geometry,
+initializes a simple wetting/non-wetting configuration, and runs one steady
+two-phase case with beginner-friendly defaults.
+
+For a small PoreSpy-based unsteady relative permeability example:
+
+```bash
+uv sync
+source .venv/bin/activate
+python examples/porespy_unsteady_relperm/run_relperm.py
+```
+
+This uses pressure-step drainage in the `ShanChen` solver, then runs the
+single-phase permeability solver on the wetting and non-wetting masks from each
+saved state. It writes a CSV table plus a combined capillary-pressure /
+relative-permeability plot into `examples/porespy_unsteady_relperm/sims/`.
+
 ## Command Line
 
 ```bash

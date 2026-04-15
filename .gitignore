@@ -10,6 +10,8 @@ __pycache__/
 latteasy.egg-info/
 
 sims/
+examples/*/sims/
+examples/porespy_unsteady_relperm/overnight_unsteady.log
 latteasy/bin/
 
 src/single_phase/permeability
@@ -19,6 +21,8 @@ src/single_phase/build.stale/
 src/gray_single_phase/gray_permeability
 src/gray_single_phase/porousObstacles3D
 src/gray_single_phase/build/
+src/multi_phase/ShanChen
+src/multi_phase/build/
 src/gray_multi_phase/porousObstacles3D
 src/gray_multi_phase/build/
 
