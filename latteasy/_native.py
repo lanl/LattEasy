@@ -127,6 +127,36 @@ def ensure_palabos_sources():
     return PALABOS_DIR
 
 
+def read_cmake_cache_value(cache_path, key):
+    """Return a value from CMakeCache.txt if it exists."""
+    if not cache_path.is_file():
+        return None
+
+    prefix = f"{key}:"
+    with cache_path.open("r", encoding="utf-8", errors="ignore") as file:
+        for line in file:
+            if line.startswith(prefix):
+                return line.partition("=")[2].strip()
+    return None
+
+
+def ensure_fresh_cmake_build_dir(build_dir, source_dir):
+    """Delete a stale CMake build tree if it points at another checkout."""
+    cache_path = build_dir / "CMakeCache.txt"
+    if not cache_path.is_file():
+        return
+
+    cached_source = read_cmake_cache_value(cache_path, "CMAKE_HOME_DIRECTORY")
+    cached_build = read_cmake_cache_value(cache_path, "CMAKE_CACHEFILE_DIR")
+    expected_source = str(source_dir.resolve())
+    expected_build = str(build_dir.resolve())
+
+    if cached_source == expected_source and (cached_build is None or cached_build == expected_build):
+        return
+
+    shutil.rmtree(build_dir, ignore_errors=True)
+
+
 def build_solver(jobs=None):
     """Build the bundled single-phase solver and copy it into the package."""
     if not SINGLE_PHASE_DIR.is_dir():
@@ -141,6 +171,7 @@ def build_solver(jobs=None):
         )
 
     ensure_palabos_sources()
+    ensure_fresh_cmake_build_dir(BUILD_DIR, SINGLE_PHASE_DIR)
     BUILD_DIR.mkdir(parents=True, exist_ok=True)
 
     configure_cmd = [
@@ -192,6 +223,7 @@ def build_gray_permeability_solver(jobs=None):
         )
 
     ensure_palabos_sources()
+    ensure_fresh_cmake_build_dir(GRAY_SINGLE_PHASE_BUILD_DIR, GRAY_SINGLE_PHASE_DIR)
     GRAY_SINGLE_PHASE_BUILD_DIR.mkdir(parents=True, exist_ok=True)
 
     configure_cmd = [
