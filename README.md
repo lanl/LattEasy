@@ -6,23 +6,19 @@ simulations from 3D pore geometries using the Palabos backend.
 
 ## Quickstart
 
-### 1. Create a virtual environment
+`uv` is required for the Python workflow.
+
+### 1. Sync the project environment
 
 ```bash
-python3 -m venv .venv
+uv sync
 source .venv/bin/activate
 ```
 
-### 2. Install the Python package
+This creates or updates the local project environment. It does not try to
+compile the native solver during sync.
 
-```bash
-pip install -e .
-```
-
-This installs the Python interface and CLI. It does not try to compile the
-native solver during installation.
-
-### 3. Check your machine
+### 2. Check your machine
 
 ```bash
 latteasy doctor
@@ -31,7 +27,7 @@ latteasy doctor
 `latteasy doctor` tells you whether Python dependencies, CMake, MPI, and the
 native solver are ready.
 
-### 4. Build the bundled solver
+### 3. Build the bundled solver
 
 ```bash
 latteasy build
@@ -50,7 +46,7 @@ Typical installs:
 
 Use the system `cmake` executable. The Python `cmake` package is not enough.
 
-### 5. Run the first simulation
+### 4. Run the first simulation
 
 ```bash
 latteasy demo
@@ -82,7 +78,8 @@ There is also a minimal script at `examples/first_simulation.py`.
 For the standalone gray-fracture example:
 
 ```bash
-pip install -e ".[examples]"
+uv sync
+source .venv/bin/activate
 python examples/gray_sponge_permeability/run_permeability.py
 ```
 
@@ -108,4 +105,3 @@ latteasy/         Python package
 examples/         small runnable examples
 src/              native C++ solver sources and bundled Palabos archive
 ```
-

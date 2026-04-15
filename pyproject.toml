@@ -10,14 +10,13 @@ authors = [{name="LattEasy Developers"}]
 readme = "README.md"
 requires-python = ">=3.8"
 dependencies = [
+    "matplotlib",
     "numpy",
     "pandas",
+    "porespy",
     "scipy",
     "scikit-image",
 ]
-
-[project.optional-dependencies]
-examples = ["matplotlib", "porespy"]
 
 [project.scripts]
 latteasy = "latteasy.cli:main"
