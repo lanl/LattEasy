@@ -109,8 +109,3 @@ examples/         small runnable examples
 src/              native C++ solver sources and bundled Palabos archive
 ```
 
-## Current scope
-
-LattEasy currently focuses on preprocessing, launching, and reading back a
-single-phase permeability workflow. The interface is being shaped around
-reliable defaults first, with advanced options exposed gradually.
