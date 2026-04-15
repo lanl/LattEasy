@@ -79,6 +79,17 @@ print(result.folder_path)
 
 There is also a minimal script at `examples/first_simulation.py`.
 
+For the standalone gray-fracture example:
+
+```bash
+pip install -e ".[examples]"
+python examples/gray_sponge_permeability/run_permeability.py
+```
+
+This keeps the usual permeability workflow, but swaps in a separate
+`gray_permeability` solver and inserts a seeded gray fracture through the
+middle of the sample before the run.
+
 ## Command Line
 
 ```bash

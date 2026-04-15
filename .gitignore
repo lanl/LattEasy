@@ -1,6 +1,7 @@
 .DS_Store
 
 .venv/
+.venv-codex/
 .pycache/
 __pycache__/
 *.py[cod]
@@ -13,5 +14,11 @@ latteasy/bin/
 src/single_phase/permeability
 src/single_phase/build/*
 !src/single_phase/build/placeholder.txt
+src/single_phase/build.stale/
+src/gray_single_phase/gray_permeability
+src/gray_single_phase/porousObstacles3D
+src/gray_single_phase/build/
+src/gray_multi_phase/porousObstacles3D
+src/gray_multi_phase/build/
 
-src/palabos-master/build/
+src/palabos-master/

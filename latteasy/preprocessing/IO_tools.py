@@ -396,7 +396,15 @@ class LattEasySimulation:
     XML input, launches the bundled solver, and reads back the permeability.
     """
 
-    def __init__(self, pore_obj, buffer_layers=2, cpus=4, num_hrs=14, allocation=None):
+    def __init__(
+        self,
+        pore_obj,
+        buffer_layers=2,
+        cpus=4,
+        num_hrs=14,
+        allocation=None,
+        solver_path=None,
+    ):
         """
         Initialize a LattEasy simulation from a 3D pore geometry.
 
@@ -413,6 +421,9 @@ class LattEasySimulation:
                 The number of hours the simulation should run. Defaults to 14.
             allocation : str, optional
                 A specific allocation for the simulation. Defaults to None.
+            solver_path : str or Path, optional
+                A specific native solver binary to launch instead of the
+                default packaged permeability executable.
 
         Returns
         --------
@@ -425,8 +436,8 @@ class LattEasySimulation:
             and writes the single-phase input file with stable defaults.
         """
 
-        # Ensure the LBM installation is present
-        self.lbm_loc = str(check_lbm_install())
+        # Allow examples to swap in an alternate native solver binary.
+        self.lbm_loc = str(solver_path) if solver_path is not None else str(check_lbm_install())
 
         # Define geometry namespace
         geom = Namespace()

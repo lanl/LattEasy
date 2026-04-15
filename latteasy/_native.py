@@ -17,6 +17,8 @@ PALABOS_ARCHIVE = SOURCE_ROOT / "palabos.zip"
 PALABOS_DIR = SOURCE_ROOT / "palabos-master"
 SINGLE_PHASE_DIR = SOURCE_ROOT / "single_phase"
 BUILD_DIR = SINGLE_PHASE_DIR / "build"
+GRAY_SINGLE_PHASE_DIR = SOURCE_ROOT / "gray_single_phase"
+GRAY_SINGLE_PHASE_BUILD_DIR = GRAY_SINGLE_PHASE_DIR / "build"
 COMMON_TOOL_DIRS = (
     Path("/opt/homebrew/bin"),
     Path("/usr/local/bin"),
@@ -67,7 +69,7 @@ def ensure_imagemagick_wrapper():
 
     WRAPPER_DIR.mkdir(parents=True, exist_ok=True)
     wrapper = WRAPPER_DIR / "convert"
-    script = f'#!/bin/sh\nexec "{magick}" convert "$@"\n'
+    script = f'#!/bin/sh\nexec "{magick}" "$@"\n'
     if not wrapper.exists() or wrapper.read_text() != script:
         wrapper.write_text(script)
         wrapper.chmod(0o755)
@@ -79,31 +81,31 @@ def find_cmake():
     return find_system_tool("cmake")
 
 
-def solver_binary_name():
+def solver_binary_name(stem="permeability"):
     """Return the platform-specific solver filename."""
-    return "permeability.exe" if os.name == "nt" else "permeability"
+    suffix = ".exe" if os.name == "nt" else ""
+    return f"{stem}{suffix}"
 
 
-def packaged_solver_path():
-    return PACKAGE_ROOT / "bin" / solver_binary_name()
+def packaged_solver_path(stem="permeability"):
+    return PACKAGE_ROOT / "bin" / solver_binary_name(stem)
 
 
-def built_solver_path():
-    return SINGLE_PHASE_DIR / solver_binary_name()
+def built_solver_path(source_dir=SINGLE_PHASE_DIR, stem="permeability"):
+    return source_dir / solver_binary_name(stem)
 
 
-def find_solver_executable():
+def find_solver_executable(stem="permeability", source_dir=SINGLE_PHASE_DIR):
     """Return the first available compiled solver executable."""
     candidates = [
-        packaged_solver_path(),
-        PACKAGE_ROOT / "src" / "single_phase" / solver_binary_name(),
-        built_solver_path(),
+        packaged_solver_path(stem),
+        built_solver_path(source_dir, stem),
     ]
     for candidate in candidates:
         if candidate.is_file():
             return candidate
     raise FileNotFoundError(
-        "No compiled solver was found. Run `latteasy build` from the repository root."
+        f"No compiled `{stem}` solver was found. Run the matching build step from the repository root."
     )
 
 
@@ -159,13 +161,64 @@ def build_solver(jobs=None):
         build_cmd.extend(["-j", str(jobs)])
     subprocess.check_call(build_cmd)
 
-    solver = built_solver_path()
+    solver = built_solver_path(SINGLE_PHASE_DIR)
     if not solver.is_file():
         raise FileNotFoundError(
             f"Build finished, but `{solver.name}` was not created where expected."
         )
 
     package_target = packaged_solver_path()
+    package_target.parent.mkdir(parents=True, exist_ok=True)
+    shutil.copy2(solver, package_target)
+    return package_target
+
+
+def find_gray_permeability_executable():
+    """Return the compiled single-phase gray permeability executable."""
+    return find_solver_executable("gray_permeability", GRAY_SINGLE_PHASE_DIR)
+
+
+def build_gray_permeability_solver(jobs=None):
+    """Build the single-phase gray permeability solver and copy it into the package."""
+    if not GRAY_SINGLE_PHASE_DIR.is_dir():
+        raise FileNotFoundError(
+            "Gray single-phase solver sources were not found. Run this command from a LattEasy source checkout."
+        )
+
+    cmake = find_cmake()
+    if cmake is None:
+        raise RuntimeError(
+            "CMake is required to build the gray permeability solver. Install it and run the example again."
+        )
+
+    ensure_palabos_sources()
+    GRAY_SINGLE_PHASE_BUILD_DIR.mkdir(parents=True, exist_ok=True)
+
+    configure_cmd = [
+        cmake,
+        "-S",
+        str(GRAY_SINGLE_PHASE_DIR),
+        "-B",
+        str(GRAY_SINGLE_PHASE_BUILD_DIR),
+        "-DCMAKE_BUILD_TYPE=Release",
+        "-DCMAKE_CXX_STANDARD=17",
+    ]
+    subprocess.check_call(configure_cmd)
+
+    build_cmd = [cmake, "--build", str(GRAY_SINGLE_PHASE_BUILD_DIR), "--config", "Release"]
+    if jobs is None:
+        jobs = os.cpu_count() or 1
+    if jobs > 0:
+        build_cmd.extend(["-j", str(jobs)])
+    subprocess.check_call(build_cmd)
+
+    solver = built_solver_path(GRAY_SINGLE_PHASE_DIR, "gray_permeability")
+    if not solver.is_file():
+        raise FileNotFoundError(
+            f"Build finished, but `{solver.name}` was not created where expected."
+        )
+
+    package_target = packaged_solver_path("gray_permeability")
     package_target.parent.mkdir(parents=True, exist_ok=True)
     shutil.copy2(solver, package_target)
     return package_target
