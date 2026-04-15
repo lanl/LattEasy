@@ -17,7 +17,7 @@ dependencies = [
 ]
 
 [project.optional-dependencies]
-examples = ["porespy"]
+examples = ["matplotlib", "porespy"]
 
 [project.scripts]
 latteasy = "latteasy.cli:main"
