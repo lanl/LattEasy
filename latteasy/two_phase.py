@@ -509,9 +509,7 @@ class LattEasyUnsteadyRelativePermeability:
             else str(check_two_phase_install())
         )
         self.single_phase_solver = (
-            str(single_phase_solver_path)
-            if single_phase_solver_path is not None
-            else str(check_single_phase_install())
+            str(single_phase_solver_path) if single_phase_solver_path is not None else None
         )
         self.cpus = cpus
         self.buffer_layers = buffer_layers
@@ -592,6 +590,11 @@ class LattEasyUnsteadyRelativePermeability:
         self.plot_path = self.relperm_path / "pc_relperm_curve.png"
         self.preview_path = self.relperm_path / "final_state.png"
 
+    def get_single_phase_solver(self):
+        if self.single_phase_solver is None:
+            self.single_phase_solver = str(check_single_phase_install())
+        return self.single_phase_solver
+
     def run_two_phase(self, mpi_procs=None):
         if mpi_procs is None:
             mpi_procs = self.cpus
@@ -631,7 +634,7 @@ class LattEasyUnsteadyRelativePermeability:
             self.relperm_path / "absolute",
             "absolute_perm",
             absolute_matrix,
-            self.single_phase_solver,
+            self.get_single_phase_solver(),
             mpi_procs,
             self.relperm_pressure,
             self.relperm_max_iterations,
@@ -666,7 +669,7 @@ class LattEasyUnsteadyRelativePermeability:
                 wetting_case,
                 f"wetting_{run_index:03d}",
                 create_single_phase_simulation_matrix(wetting_geometry),
-                self.single_phase_solver,
+                self.get_single_phase_solver(),
                 mpi_procs,
                 self.relperm_pressure,
                 self.relperm_max_iterations,
@@ -678,7 +681,7 @@ class LattEasyUnsteadyRelativePermeability:
                 non_wetting_case,
                 f"non_wetting_{run_index:03d}",
                 create_single_phase_simulation_matrix(non_wetting_geometry),
-                self.single_phase_solver,
+                self.get_single_phase_solver(),
                 mpi_procs,
                 self.relperm_pressure,
                 self.relperm_max_iterations,

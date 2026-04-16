@@ -309,9 +309,18 @@ def create_geom_edist(rock, args):
     # Calculate the Euclidean distance for the rock matrix
     erock = edist(rock)
 
-    # Ensure all the BCs have BB nodes
-    erock[0, :, :] = erock[:, 0, :] = erock[:, :, 0] = 1
-    erock[-1, :, :] = erock[:, -1, :] = erock[:, :, -1] = 1
+    periodic_x, periodic_y, periodic_z = getattr(args, "periodic", (False, False, False))
+
+    # Add boundary nodes only on non-periodic faces.
+    if not periodic_x:
+        erock[0, :, :] = 1
+        erock[-1, :, :] = 1
+    if not periodic_y:
+        erock[:, 0, :] = 1
+        erock[:, -1, :] = 1
+    if not periodic_z:
+        erock[:, :, 0] = 1
+        erock[:, :, -1] = 1
 
     # Reopen the pores
     erock[rock == 0] = 0
@@ -404,6 +413,7 @@ class LattEasySimulation:
         num_hrs=14,
         allocation=None,
         solver_path=None,
+        periodic=(False, False, False),
     ):
         """
         Initialize a LattEasy simulation from a 3D pore geometry.
@@ -449,6 +459,7 @@ class LattEasySimulation:
         geom.num_slices = buffer_layers
         geom.swapXZ = True
         geom.scale_2 = False
+        geom.periodic = periodic
 
         # Create required directories
         create_folder("sims")
@@ -478,7 +489,7 @@ class LattEasySimulation:
         input_file_name = f"{self.folder_path}/{name}.xml"
         geom_name = f"{geom.name}_{pore_size[0]}_{pore_size[1]}_{pore_size[2]}"
         domain_size = [pore_size[0], pore_size[1], pore_size[2]]
-        periodic = ["false", "false", "false"]
+        periodic = [str(value).lower() for value in periodic]
 
         create_folder(f"{self.folder_path}/output")
 
