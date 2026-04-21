@@ -1,0 +1,13 @@
+# Ignore temporary files created through editing, compilation, and linking.
+*~
+*.o
+*.a
+*.dblite
+*.pyc
+*.os
+*.exe
+.vscode
+.ccls-cache
+.vs
+.cache
+compile_commands.json
