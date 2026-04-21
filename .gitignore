@@ -26,4 +26,4 @@ src/multi_phase/build/
 src/gray_multi_phase/porousObstacles3D
 src/gray_multi_phase/build/
 
-src/palabos-master/
+#src/palabos-master/
