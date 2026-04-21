@@ -21,6 +21,9 @@ MULTI_PHASE_DIR = SOURCE_ROOT / "multi_phase"
 MULTI_PHASE_BUILD_DIR = MULTI_PHASE_DIR / "build"
 GRAY_SINGLE_PHASE_DIR = SOURCE_ROOT / "gray_single_phase"
 GRAY_SINGLE_PHASE_BUILD_DIR = GRAY_SINGLE_PHASE_DIR / "build"
+FOAM_DIR = SOURCE_ROOT / "foam"
+FOAM_BUILD_DIR = FOAM_DIR / "build"
+
 COMMON_TOOL_DIRS = (
     Path("/opt/homebrew/bin"),
     Path("/usr/local/bin"),
@@ -311,3 +314,53 @@ def build_gray_permeability_solver(jobs=None):
     package_target.parent.mkdir(parents=True, exist_ok=True)
     shutil.copy2(solver, package_target)
     return package_target
+
+
+
+def build_foam_solver(jobs=None):
+    """Build the foam solver and copy it into the package."""
+    if not FOAM_DIR.is_dir():
+        raise FileNotFoundError(
+            "Foam solver sources were not found. Run this command from a LattEasy source checkout."
+        )
+
+    cmake = find_cmake()
+    if cmake is None:
+        raise RuntimeError(
+            "CMake is required to build the foam solver. Install it and run the example again."
+        )
+
+    ensure_palabos_sources()
+    ensure_fresh_cmake_build_dir(FOAM_BUILD_DIR, FOAM_DIR)
+    FOAM_BUILD_DIR.mkdir(parents=True, exist_ok=True)
+
+    configure_cmd = [
+        cmake,
+        "-S",
+        str(FOAM_DIR),
+        "-B",
+        str(FOAM_BUILD_DIR),
+        "-DCMAKE_BUILD_TYPE=Release",
+        "-DCMAKE_CXX_STANDARD=11",
+    ]
+    env = build_runtime_env()
+    subprocess.check_call(configure_cmd, env=env)
+
+    build_cmd = [cmake, "--build", str(FOAM_BUILD_DIR), "--config", "Release"]
+    if jobs is None:
+        jobs = os.cpu_count() or 1
+    if jobs > 0:
+        build_cmd.extend(["-j", str(jobs)])
+    subprocess.check_call(build_cmd, env=env)
+
+    solver = built_solver_path(FOAM_DIR, "foam_flow")
+    if not solver.is_file():
+        raise FileNotFoundError(
+            f"Build finished, but `{solver.name}` was not created where expected."
+        )
+
+    package_target = packaged_solver_path("foam_flow")
+    package_target.parent.mkdir(parents=True, exist_ok=True)
+    shutil.copy2(solver, package_target)
+    return package_target
+
