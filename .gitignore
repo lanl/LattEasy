@@ -28,4 +28,4 @@ src/gray_multi_phase/build/
 src/foam/foam_flow
 src/foam/build/
 
-#src/palabos-master/
+src/palabos-master/
