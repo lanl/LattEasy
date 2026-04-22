@@ -7,7 +7,7 @@ import importlib.util
 import subprocess
 import sys
 
-from ._native import build_solver, find_cmake, find_mpi_launcher, find_solver_executable
+from ._native import build_solver, build_foam_solver, find_cmake, find_mpi_launcher, find_solver_executable
 
 
 def _package_present(module_name):
@@ -79,6 +79,7 @@ def _doctor(_args):
 def _build(args):
     try:
         solver = build_solver(jobs=args.jobs)
+        foam_solver = build_foam_solver(jobs=args.jobs)
     except subprocess.CalledProcessError:
         print(
             "Native build failed. Confirm CMake, a working C++ compiler, and MPI development libraries are installed.",
@@ -90,6 +91,7 @@ def _build(args):
         return 1
 
     print(f"Solver built successfully: {solver}")
+    print(f"Foam solver built successfully: {foam_solver}")
     print("Next step: run `latteasy demo`.")
     return 0
 
