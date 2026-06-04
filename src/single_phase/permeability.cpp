@@ -285,7 +285,6 @@ int main(int argc, char **argv) {
   lattice.toggleInternalStatistics(false);
 
   for (; iT < maxT; ++iT) {
-
     if (iT % 250 == 0 && iT > 0) {
 
       lattice.toggleInternalStatistics(true);
@@ -294,6 +293,7 @@ int main(int argc, char **argv) {
       lattice.collideAndStream();
       new_avg_f = getStoredAverageEnergy(lattice);
       lattice.toggleInternalStatistics(false);
+
       relE_f1 = std::fabs(old_avg_f - new_avg_f) * 100 / old_avg_f;
       pcout << "Relative difference of Energy: " << setprecision(3) << relE_f1
             << " %" << std::endl;
@@ -301,10 +301,13 @@ int main(int argc, char **argv) {
       computePermeability(lattice, nu, deltaP, lattice.getBoundingBox(),
                           permeability, meanVelocity);
       pcout << "**********************************************" << std::endl;
+      
       if (relE_f1 < conv) {
         break;
       }
       old_avg_f = new_avg_f; // store new properties
+    } else {
+      lattice.collideAndStream();
     }
   }
 
