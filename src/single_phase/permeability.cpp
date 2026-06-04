@@ -15,8 +15,6 @@
 using namespace plb;
 using namespace std;
 
-using namespace plb;
-
 typedef double T;
 #define DESCRIPTOR descriptors::D3Q19Descriptor
 
@@ -101,7 +99,7 @@ void readGeometry(const std::string &inputFolder,
   }
 
   if (vtk_out == true) {
-    VtkImageOutput3D<T> vtkOut(createFileName("PorousMedium", 1, 6), 1.0);
+    VtkImageOutput3D<T> vtkOut("PorousMedium", 1.0);
     vtkOut.writeData<float>(
         *copyConvert<int, T>(geometry, geometry.getBoundingBox()), "tag", 1.0);
   }
@@ -151,8 +149,7 @@ void porousMediaSetup(
   delete boundaryCondition;
 }
 
-void writeGifs(MultiBlockLattice3D<T, DESCRIPTOR> &lattice, plint iter,
-               plint run) {
+void writeGifs(MultiBlockLattice3D<T, DESCRIPTOR> &lattice) {
   const plint nx = lattice.getNx();
   const plint ny = lattice.getNy();
   const plint nz = lattice.getNz();
@@ -162,21 +159,20 @@ void writeGifs(MultiBlockLattice3D<T, DESCRIPTOR> &lattice, plint iter,
 
   // Write velocity-norm at x=1.
   imageWriter.writeScaledGif(
-      createFileName("ux_inlet", run, 6),
+      "ux_inlet",
       *computeVelocityNorm(lattice, Box3D(2, 2, 0, ny - 1, 0, nz - 1)), imSize,
       imSize);
 
   // Write velocity-norm at x=nx/2.
   imageWriter.writeScaledGif(
-      createFileName("ux_half", run, 6),
+      "ux_half",
       *computeVelocityNorm(lattice,
                            Box3D(nx / 2, nx / 2, 0, ny - 1, 0, nz - 1)),
       imSize, imSize);
 }
 
-void writeVTK(MultiBlockLattice3D<T, DESCRIPTOR> &lattice, plint iter,
-              plint run) {
-  VtkImageOutput3D<T> vtkOut(createFileName("vtk_vel", run, 6), 1.);
+void writeVTK(MultiBlockLattice3D<T, DESCRIPTOR> &lattice) {
+  VtkImageOutput3D<T> vtkOut("vtk_vel", 1.);
   vtkOut.writeData<float>(*computeVelocityNorm(lattice), "velocityNorm", 1.);
   vtkOut.writeData<3, float>(*computeVelocity(lattice), "velocity", 1.);
 }
@@ -212,7 +208,6 @@ int main(int argc, char **argv) {
   plint ny;
   plint nz;
   T deltaP;
-  plint requestedRuns;
   bool nx_p, ny_p, nz_p;
   bool vtk_out;
   std::string GeometryName;
@@ -245,13 +240,11 @@ int main(int argc, char **argv) {
     document["folder"]["in_f"].read(fNameIn);
 
     document["simulations"]["press"].read(deltaP);
-    document["simulations"]["num"].read(requestedRuns);
     document["simulations"]["iter"].read(maxT);
     document["simulations"]["conv"].read(conv);
     document["simulations"]["vtk_out"].read(vtk_out);
 
   } catch (PlbIOException &exception) {
-    pcout << exception.what() << std::endl;
     pcout << exception.what() << std::endl;
     return -1;
   }
@@ -260,19 +253,10 @@ int main(int argc, char **argv) {
   global::directories().setOutputDir(fNameOut + "/");
   global::directories().setInputDir(inputF + "/");
 
-  if (requestedRuns != 1) {
-    pcout << "This single-phase solver supports exactly one simulation per "
-             "input file. "
-          << "Set <num> to 1." << std::endl;
-    return -1;
-  }
-
-  const plint run = 1;
   const T omega = 1.0;
   const T nu = ((T)1 / omega - (T)0.5) / DESCRIPTOR<T>::invCs2;
   T permeability = (T)0;
   T meanVelocity = (T)0;
-  pcout << "Total simulations: 1" << std::endl;
   pcout << "The convergence threshold is: " << conv << " %" << std::endl;
 
   const bool gifOutputEnabled = isToolOnPath("convert");
@@ -330,7 +314,7 @@ int main(int argc, char **argv) {
                       permeability, meanVelocity, false);
 
   if (gifOutputEnabled) {
-    writeGifs(lattice, iT, run);
+    writeGifs(lattice);
   }
 
   std::string outDir = fNameOut + "/";
@@ -346,7 +330,7 @@ int main(int argc, char **argv) {
 
   if (vtk_out == true) {
     pcout << "Writing VTK file ..." << std::endl;
-    writeVTK(lattice, iT, run);
+    writeVTK(lattice);
   }
 
   pcout << "Printing outputs" << std::endl;

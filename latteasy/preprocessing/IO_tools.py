@@ -198,7 +198,7 @@ def create_single_phase_input_file(
         io_folders : list
             A list containing the paths to the input and output folders, in that order.
         sim_settings : list
-            A list containing the number of geometries/simulations, pressure, maximum number of iterations, and convergence, in that order.
+            A list containing the pressure, maximum number of iterations, and convergence, in that order.
         save_vtks : str
             Determines whether to save VTK files for the medium and velocity. This should be a string, either "True" or "False".
 
@@ -212,7 +212,7 @@ def create_single_phase_input_file(
 
     Examples
     --------
-        >>> create_single_phase_input_file('input.xml', 'geometry', [100, 100, 100], ['True', 'False', 'True'], ['input/', 'output/'], [5, 0.02, 2000, 0.0001], 'True')
+        >>> create_single_phase_input_file('input.xml', 'geometry', [100, 100, 100], ['True', 'False', 'True'], ['input/', 'output/'], [0.02, 2000, 0.0001], 'True')
         # This will create 'input.xml' with the specified settings.
 
     """
@@ -224,7 +224,7 @@ def create_single_phase_input_file(
     input_folder, output_folder = io_folders
 
     # Parse simulation inputs
-    num_geoms_or_sims, pressure, max_iter, convergence = sim_settings
+    pressure, max_iter, convergence = sim_settings
 
     # Open the input file, creating it if necessary
     with open(input_file_name, "w") as file:
@@ -249,7 +249,6 @@ def create_single_phase_input_file(
 
         # Write the simulation settings to the file
         file.write("<simulations>\n")
-        file.write(f"\t<num> {num_geoms_or_sims} </num>\n")
         file.write(f"\t<press> {pressure} </press>\n")
         file.write(f"\t<iter> {max_iter} </iter>\n")
         file.write(f"\t<conv> {convergence} </conv>\n")
@@ -483,11 +482,10 @@ class LattEasySimulation:
         create_folder(f"{self.folder_path}/output")
 
         io_folders = ["input/", "output/"]
-        num_sims = 1
         sim_pressure = 0.0005
         sim_max_iter = 1000000
         sim_convergence = 0.0001
-        sim_settings = [num_sims, sim_pressure, sim_max_iter, sim_convergence]
+        sim_settings = [sim_pressure, sim_max_iter, sim_convergence]
         save_vtks = "true"
         create_single_phase_input_file(
             input_file_name,

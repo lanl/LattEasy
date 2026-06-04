@@ -310,7 +310,7 @@ def run_single_phase_case(
         geometry_matrix.shape,
         ["false", "false", "false"],
         ["input/", "output/"],
-        [1, pressure, max_iterations, convergence],
+        [pressure, max_iterations, convergence],
         "true" if save_vtks else "false",
     )
 

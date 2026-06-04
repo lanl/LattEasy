@@ -160,7 +160,7 @@ def ensure_fresh_cmake_build_dir(build_dir, source_dir):
 
 
 def build_solver(jobs=None):
-    """Build the bundled single-phase solver and copy it into the package."""
+    """Build the bundled single-phase solver."""
     if not SINGLE_PHASE_DIR.is_dir():
         raise FileNotFoundError(
             "Native solver sources were not found. Run this command from a LattEasy source checkout."
@@ -195,16 +195,12 @@ def build_solver(jobs=None):
         build_cmd.extend(["-j", str(jobs)])
     subprocess.check_call(build_cmd, env=env)
 
-    solver = built_solver_path(SINGLE_PHASE_DIR)
+    solver = packaged_solver_path()
     if not solver.is_file():
         raise FileNotFoundError(
             f"Build finished, but `{solver.name}` was not created where expected."
         )
-
-    package_target = packaged_solver_path()
-    package_target.parent.mkdir(parents=True, exist_ok=True)
-    shutil.copy2(solver, package_target)
-    return package_target
+    return solver
 
 
 def find_gray_permeability_executable():
