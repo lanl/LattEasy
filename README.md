@@ -114,6 +114,17 @@ single-phase permeability solver on the wetting and non-wetting masks from each
 saved state. It writes a CSV table plus a combined capillary-pressure /
 relative-permeability plot into `examples/porespy_unsteady_relperm/sims/`.
 
+For a foam flow through a pore-throat structure example:
+
+```bash
+uv sync
+source .venv/bin/activate
+python examples/foam_flow/run_foam.py
+```
+
+This simulates force-driven flow in the `FreeSurface` solver, then runs the
+two-phase free surface solver on two bubbles through a pore-throat structure, with beginner-friendly defaults.
+
 ## Command Line
 
 ```bash
